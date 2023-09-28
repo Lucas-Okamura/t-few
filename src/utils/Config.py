@@ -21,6 +21,7 @@ class Config(object):
         self.dataset = "rte"
         self.few_shot = True
         self.num_shot = 16
+        self.test_size = 50000
         self.few_shot_random_seed = 100
         self.train_template_idx = -1
         self.eval_template_idx = -1

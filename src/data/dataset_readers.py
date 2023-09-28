@@ -20,6 +20,7 @@ def get_dataset_reader(config):
         "wic": WiCReader,
         "winogrande": WinograndeReader,
         "cb": CBReader,
+        "news-articles-ptbr": NewsArticlesPTBRReader,
         "storycloze": StoryClozeReader,
         "anli-r1": ANLIR1Reader,
         "anli-r2": ANLIR2Reader,
@@ -183,6 +184,39 @@ class BaseDatasetReader(object):
         accuracy = sum(matching) / len(matching)
         return {"accuracy": accuracy}
 
+class NewsArticlesPTBRReader(BaseDatasetReader):
+    def __init__(self, config):
+        super().__init__(config, dataset_stash=("iara-project/news-articles-ptbr-dataset",))
+
+    def read_orig_dataset(self, split):
+        """
+        Read the original dataset
+
+        :param split: split of data
+        """
+        if split == 'validation':
+            split = 'test'
+
+        orig_data = load_dataset(*self.dataset_stash, split=split)
+        orig_data = orig_data.class_encode_column("category")
+        orig_data = orig_data.rename_column('category', 'label')
+
+        if split == 'train':
+            datasets_list = []
+            num_classes = orig_data.features['label'].num_classes
+            for i in range(num_classes):
+                dataset_append = orig_data.filter(lambda x: x['label'] == i) \
+                                          .shuffle(seed=self.config.seed) \
+                                          .select(range(self.config.num_shot))
+                datasets_list.append(dataset_append)
+            orig_data = orig_data.concatenate_datasets(datasets_list)
+        elif split == 'test':
+            orig_data = orig_data.shuffle(seed=self.config.seed) \
+                                 .select(range(self.config.test_size))
+        print(f"Finished {split} loading:")
+        print(orig_data)
+
+        return orig_data
 
 class StoryClozeReader(BaseDatasetReader):
     def __init__(self, config):
