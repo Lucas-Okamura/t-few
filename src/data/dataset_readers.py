@@ -2,6 +2,7 @@ import os
 import json
 import numpy as np
 from datasets import load_dataset, load_from_disk
+import datasets
 from promptsource.templates import DatasetTemplates
 import pkg_resources
 from promptsource import templates
@@ -209,7 +210,7 @@ class NewsArticlesPTBRReader(BaseDatasetReader):
                                           .shuffle(seed=self.config.seed) \
                                           .select(range(self.config.num_shot))
                 datasets_list.append(dataset_append)
-            orig_data = orig_data.concatenate_datasets(datasets_list)
+            orig_data = datasets.concatenate_datasets(datasets_list)
         elif split == 'test':
             orig_data = orig_data.shuffle(seed=self.config.seed) \
                                  .select(range(self.config.test_size))
